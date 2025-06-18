@@ -4,6 +4,8 @@
 
 **RAG-FastAPI-Server** is an API server for managing a lightweight Retrieval-Augmented Generation (RAG) database using FastAPI and PostgreSQL (with `pgvector` for vector similarity search). It enables storing text data with vector embeddings, efficient similarity search, and management of this data through a simple REST API. All core database logic is encapsulated in the `RAGLocal` class.
 
+**[Article on Medium](https://medium.com/@fredyriveraacevedo13/building-a-fastapi-powered-rag-backend-with-postgresql-pgvector-c239f032508a)** 
+
 ---
 
 ## Features
