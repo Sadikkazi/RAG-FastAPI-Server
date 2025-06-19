@@ -6,6 +6,14 @@
 
 **[Article on Medium](https://medium.com/@fredyriveraacevedo13/building-a-fastapi-powered-rag-backend-with-postgresql-pgvector-c239f032508a)** 
 
+## Demo Video
+
+
+
+https://github.com/user-attachments/assets/9fe633a2-a88e-454e-b84b-99c6cfd87e32
+
+
+
 ---
 
 ## Features
