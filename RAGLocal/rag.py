@@ -4,7 +4,7 @@ from psycopg2.extras import RealDictCursor
 from typing import List
 
 class RAGLocal:
-    def __init__(self, dbname: str, user: str, password: str, host: str, port: int = 5432):
+    def __init__(self, dbname: str, user: str, password: str, host: str, port: int = 5432, rag_multimodal=None):
         self.dsn = {
             "dbname": dbname,
             "user": user,
@@ -14,6 +14,8 @@ class RAGLocal:
         }
         self.dbname = dbname
         self._conn = None
+
+        self.rag_multimodal = rag_multimodal
 
     def connect(self):
         """Abre la conexión si no existe y la devuelve."""
@@ -133,35 +135,84 @@ class RAGLocal:
         top_k: int = 5,
         type_index: str = "cos"
     ) -> List[dict]:
-        """
-        Recupera los top_k registros más similares según el índice,
-        y asigna un score entre 0 y 1.
-
-        type_index: "cos" para cosine, "euclidean" para L2.
-        """
-        # Elegir operador de distancia PGVector
         op = "<#>" if type_index == "cos" else "<->"
         cur = self.cursor(dict_cursor=True)
-        cur.execute(
-            sql.SQL(
-                f"SELECT id, {content_column} AS content, embedding {op} %s AS dist "
-                f"FROM {table_name} ORDER BY dist LIMIT %s"
-            ),
-            (query_embedding, top_k)
+
+        sql_query = sql.SQL(
+            "SELECT id, {content} AS content, embedding {op} %s::vector AS dist "
+            "FROM {table} "
+            "ORDER BY dist "
+            "LIMIT %s;"
+        ).format(
+            content=sql.Identifier(content_column),
+            op=sql.SQL(op),
+            table=sql.Identifier(table_name)
         )
+
+        cur.execute(sql_query, (query_embedding, top_k))
         rows = cur.fetchall()
+
         results = []
         for row in rows:
             dist = row["dist"]
+            print("raw dist:", dist)
             if type_index == "cos":
-                score = max(0.0, 1.0 - dist)
+                # Cosine: menor dist => más similar
+                # Por los embeddings parece ser esta formula?
+                score = max(0.0, ((1.0 - dist)/2))
             else:
+                # Euclidean
                 score = 1.0 / (1.0 + dist)
             results.append({
                 "id": row["id"],
                 "content": row["content"],
-                "score": score
+                "score": round(score, 3)
             })
         cur.close()
         return results
+
+    def create_image_index(
+        self,
+        table_name: str,
+        path_column: str = "path",
+        embedding_dim: int = 512,
+        type_index: str = "cos"
+    ):
+        """
+        Crea tabla e índice para almacenar paths de imágenes y embeddings CLIP.
+        """
+        self.create_index(table_name, path_column, embedding_dim, type_index)
+
+    def add_image(
+        self,
+        table_name: str,
+        path_column: str,
+        image_path: str
+    ) -> int:
+        """
+        Usa la instancia rag_multimodal para obtener embedding de la imagen,
+        y almacena junto al path.
+        """
+        if self.rag_multimodal is None:
+            raise ValueError("Se requiere instancia rag_multimodal para agregar imágenes.")
+        emb = self.rag_multimodal.get_embeddings(image_path).tolist()
+        return self.add_rag(table_name, path_column, image_path, emb)
+
+    def query_image(
+        self,
+        table_name: str,
+        path_column: str,
+        image_path: str,
+        top_k: int = 5,
+        type_index: str = "cos"
+    ) -> List[dict]:
+        """
+        Recupera los paths de las imágenes más similares a la imagen de consulta.
+        """
+        if self.rag_multimodal is None:
+            raise ValueError("Se requiere instancia rag_multimodal para consulta de imágenes.")
+        query_emb = self.rag_multimodal.get_embeddings(image_path).tolist()
+        results = self.query(table_name, path_column, query_emb, top_k, type_index)
+        return results
+
 
