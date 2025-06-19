@@ -52,12 +52,18 @@ if __name__ == "__main__":
     #rag.create_image_index("images2", "path")
 
     # Indexa una imagen
-    #id_leon = rag.add_image("images2", "path", "leon_A.jpg")
+    #id_leon = rag.add_image("images2", "path", "leonA.jpg")
+
+    #id_leon2 = rag.add_image("images2", "path", "leonC.jpg")
 
     #id_leop = rag.add_image("images2", "path", "leopardo.jpg")
 
     #man_id = rag.add_image("images2", "path", "man.jpg")
 
-    resultados = rag.query_image("images2", "path", "leon_A.jpg", top_k=3)
+    query_image = "leonA.jpg"
+
+    print(f"Query: {query_image}")
+
+    resultados = rag.query_image("images2", "path", query_image, top_k=3)
     for r in resultados:
         print(f"ID: {r['id']}, Path: {r['content']}, Score: {r['score']:.3f}")
