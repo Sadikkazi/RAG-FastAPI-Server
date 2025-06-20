@@ -41,12 +41,12 @@ class ImageRAG:
 
 
 
-if __name__ == "__main__":
-    from rag import RAGLocal
-    model_name = "openai/clip-vit-base-patch32"
-    image_rag = ImageRAG(model_name)
+#if __name__ == "__main__":
+#    from rag import RAGLocal
+#    model_name = "openai/clip-vit-base-patch32"
+#    image_rag = ImageRAG(model_name)
 
-    rag = RAGLocal(dbname="mi_rag", user="user", password="password", host="localhost", rag_multimodal=image_rag)
+#    rag = RAGLocal(dbname="mi_rag", user="user", password="password", host="localhost", rag_multimodal=image_rag)
 
     # Crea tabla + índice
     #rag.create_image_index("images2", "path")
@@ -60,10 +60,10 @@ if __name__ == "__main__":
 
     #man_id = rag.add_image("images2", "path", "man.jpg")
 
-    query_image = "leonA.jpg"
+#    query_image = "leonA.jpg"
 
-    print(f"Query: {query_image}")
+#    print(f"Query: {query_image}")
 
-    resultados = rag.query_image("images2", "path", query_image, top_k=3)
-    for r in resultados:
-        print(f"ID: {r['id']}, Path: {r['content']}, Score: {r['score']:.3f}")
+#    resultados = rag.query_image("images2", "path", query_image, top_k=3)
+#    for r in resultados:
+#        print(f"ID: {r['id']}, Path: {r['content']}, Score: {r['score']:.3f}")
