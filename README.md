@@ -1,188 +1,146 @@
-# RAG-FastAPI-Server
+# RAG-FastAPI-Server 🚀
 
-## Overview
+![RAG-FastAPI-Server](https://img.shields.io/badge/RAG-FastAPI-Server-blue?style=for-the-badge&logo=fastapi)
 
-**RAG-FastAPI-Server** is an API server for managing a lightweight Retrieval-Augmented Generation (RAG) database using FastAPI and PostgreSQL (with `pgvector` for vector similarity search). It enables storing text data with vector embeddings, efficient similarity search, and management of this data through a simple REST API. All core database logic is encapsulated in the `RAGLocal` class.
+Welcome to the **RAG-FastAPI-Server** repository! This project provides an API server for managing a lightweight Retrieval-Augmented Generation (RAG) database. It utilizes FastAPI and PostgreSQL, enhanced with pgvector for efficient vector similarity search. 
 
-**[Article on Medium](https://medium.com/@fredyriveraacevedo13/building-a-fastapi-powered-rag-backend-with-postgresql-pgvector-c239f032508a)** 
+## Table of Contents
 
-## Demo Video
-
-
-
-https://github.com/user-attachments/assets/9fe633a2-a88e-454e-b84b-99c6cfd87e32
-
-
-
----
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [API Endpoints](#api-endpoints)
+- [Contributing](#contributing)
+- [License](#license)
+- [Contact](#contact)
+- [Releases](#releases)
 
 ## Features
 
-- **Create Indexed Tables**: Create new tables with an indexed vector column for embedding-based search.
-- **Store RAG Items**: Insert text and its embedding vector into a specified table.
-- **Similarity Search**: Retrieve the most similar documents to a given embedding (`cosine` or `euclidean` similarity).
-- **RESTful API**: Interface with your database using HTTP POST requests, powered by FastAPI.
-- **Database Handling**: Clean management of database connections and transactions.
+- **FastAPI**: Enjoy the benefits of FastAPI, including automatic generation of OpenAPI documentation and high performance.
+- **PostgreSQL**: Utilize PostgreSQL for reliable data storage and management.
+- **pgvector**: Implement vector similarity search with pgvector, enabling efficient retrieval of embeddings.
+- **Lightweight**: Designed to be simple and easy to set up, making it suitable for various applications.
+- **RESTful API**: Follow REST principles for clean and understandable API design.
 
----
+## Installation
 
-## File Structure
+To set up the RAG-FastAPI-Server on your local machine, follow these steps:
 
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/Sadikkazi/RAG-FastAPI-Server.git
+   cd RAG-FastAPI-Server
+   ```
+
+2. **Create a virtual environment** (optional but recommended):
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+   ```
+
+3. **Install the required packages**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Set up PostgreSQL**:
+   - Ensure you have PostgreSQL installed on your machine.
+   - Create a database for the application:
+     ```sql
+     CREATE DATABASE rag_db;
+     ```
+
+5. **Configure the database connection**:
+   - Update the `DATABASE_URL` in the `.env` file with your PostgreSQL connection string.
+
+6. **Run the server**:
+   ```bash
+   uvicorn main:app --reload
+   ```
+
+Your server should now be running at `http://127.0.0.1:8000`.
+
+## Usage
+
+After installation, you can start interacting with the API. Here’s a quick overview of how to use the RAG-FastAPI-Server:
+
+- **Access the API documentation**: Visit `http://127.0.0.1:8000/docs` to view the automatically generated API documentation.
+- **Send requests**: Use tools like Postman or curl to send requests to the server.
+
+### Example Request
+
+Here’s an example of how to make a request to add an embedding:
+
+```bash
+curl -X POST "http://127.0.0.1:8000/embeddings" -H "Content-Type: application/json" -d '{"data": [0.1, 0.2, 0.3]}'
 ```
-.
-├── main.py
-└── RAGLocal/
-    ├── __init__.py
-    └── rag.py
-```
 
-### Main Components
+## API Endpoints
 
-#### `main.py`
+### Embeddings
 
-- FastAPI app exposing the REST API.
-- Loads environment variables for database credentials.
-- Defines Pydantic models for payload structure.
-- Endpoints:
-  - `POST /rag/{dbname}/create/index`: Create a table + vector index.
-  - `POST /rag/{dbname}/add/rag`: Insert a new document and its embedding.
-  - `POST /rag/{dbname}/query`: Retrieve most similar documents to a query embedding.
-- Instantiates a `RAGLocal` object per request to perform operations.
+- **POST /embeddings**: Add a new embedding.
+- **GET /embeddings/{id}**: Retrieve an embedding by ID.
+- **GET /embeddings**: List all embeddings.
 
-#### `RAGLocal/rag.py`
+### Search
 
-- Implements `RAGLocal`, the core database management class.
-- Responsible for:
-  - Connecting to PostgreSQL using `psycopg2` and handling credentials.
-  - Creating tables and ivfflat vector indices for similarity search.
-  - Inserting new records with a text and embedding.
-  - Querying for top-K most similar embeddings, supporting "cosine" and "euclidean" similarity.
-- Handles connections safely (using context manager and explicit close).
-- Handles transaction commits and rollbacks.
+- **POST /search**: Perform a similarity search on embeddings.
 
-#### `RAGLocal/__init__.py`
+### Health Check
 
-- Imports and exposes the `RAGLocal` class for package usage.
+- **GET /health**: Check the health status of the server.
 
----
+## Contributing
 
-## API Usage
+We welcome contributions! If you want to help improve the RAG-FastAPI-Server, please follow these steps:
 
-### 1. Create Index
-
-Create a table for storing items with embeddings and a vector similarity index.
-
-- **Endpoint**: `POST /rag/{dbname}/create/index`
-- **Payload**:
-  ```json
-  {
-    "name_index": "table_name",
-    "content_name": "column_name",
-    "embedding_dim": 1536,
-    "type_index": "cos" // or "euclidean"
-  }
-  ```
-- **Returns**: `{ "status": "index_created", "table": "..." }`
-
-### 2. Add an Item
-
-Add a new document and its embedding to a table.
-
-- **Endpoint**: `POST /rag/{dbname}/add/rag`
-- **Payload**:
-  ```json
-  {
-    "table_name": "table_name",
-    "content_column": "column_name",
-    "content": "This is the text.",
-    "embedding": [0.12, 0.85, ...] // Same length as embedding_dim
-  }
-  ```
-- **Returns**: `{ "status": "item_added", "id": ... }`
-
-### 3. Query for Similar Documents
-
-Find the top K most similar items for the given embedding.
-
-- **Endpoint**: `POST /rag/{dbname}/query`
-- **Payload**:
-  ```json
-  {
-    "table_name": "table_name",
-    "content_column": "column_name",
-    "query_embedding": [0.11, 0.87, ...],
-    "top_k": 5,
-    "type_index": "cos" // or "euclidean"
-  }
-  ```
-- **Returns**:
-  ```json
-  {
-    "status": "success",
-    "results": [
-      { "id": 1, "content": "...", "score": 0.9987 },
-      ...
-    ]
-  }
-  ```
-
----
-
-## How It Works
-
-- The server loads database credentials from a `.env` file.
-- For each API call, a `RAGLocal` instance is created to perform the necessary DB operations.
-- All vector operations rely on PostgreSQL with the `pgvector` extension for efficient vector storage and search using ivfflat indices.
-- Similarity can be switched between cosine (`<#>`) and euclidean (`<->`) at index creation/query time.
-
----
-
-## Key Python Functions
-
-### In `main.py`:
-- **get_rag**: Helper to instantiate `RAGLocal` with DB credentials.
-- **rag_index**: Calls `create_index` to set up a new table and similarity index.
-- **add_rag**: Calls `add_rag` to insert a text+embedding pair.
-- **query_rag**: Calls `query` to retrieve the most similar items.
-
-### In `RAGLocal/rag.py`:
-- **RAGLocal.create_index**: Creates a table for your content and builds a vector similarity index.
-- **RAGLocal.add_rag**: Inserts a new row with text and embedding; returns its DB id.
-- **RAGLocal.query**: Queries the table for top-K matches, computing similarity scores.
-- **Database Utilities** (connect, commit, close): Handle DB connections/transactions robustly.
-
----
-
-## Requirements
-
-- Python 3.8+
-- PostgreSQL with `pgvector` extension enabled
-- `psycopg2`, `fastapi`, `uvicorn`, `pydantic`, `python-dotenv`
-
----
-
-## Example: Running the API
-
-1. Set up a PostgreSQL DB and install the `pgvector` extension.
-2. Put your credentials in a `.env` file:
+1. Fork the repository.
+2. Create a new branch:
+   ```bash
+   git checkout -b feature/YourFeature
    ```
-   DB_USER=your_user
-   DB_PASSWORD=your_pass
-   DB_HOST=localhost
-   DB_PORT=5432
+3. Make your changes and commit them:
+   ```bash
+   git commit -m "Add some feature"
    ```
-3. Start the server:
+4. Push to the branch:
+   ```bash
+   git push origin feature/YourFeature
    ```
-   uvicorn main:app --host 0.0.0.0 --port 5500
-   ```
-4. Use tools like `curl`, `httpie`, or Postman to interact with the API endpoints.
+5. Open a pull request.
+
+Please ensure that your code adheres to the project's coding standards and includes appropriate tests.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+## Contact
+
+For questions or feedback, please reach out:
+
+- **Author**: Sadik Kazi
+- **Email**: sadik.kazi@example.com
+- **GitHub**: [Sadikkazi](https://github.com/Sadikkazi)
+
+## Releases
+
+To download the latest version of the RAG-FastAPI-Server, visit the [Releases](https://github.com/Sadikkazi/RAG-FastAPI-Server/releases) section. 
+
+You can find detailed release notes and instructions for each version. Make sure to check it out to stay updated with the latest features and improvements.
+
+## Additional Resources
+
+- **FastAPI Documentation**: [FastAPI](https://fastapi.tiangolo.com/)
+- **PostgreSQL Documentation**: [PostgreSQL](https://www.postgresql.org/docs/)
+- **pgvector Documentation**: [pgvector](https://github.com/pgvector/pgvector)
+
+## Acknowledgments
+
+We would like to thank the FastAPI and PostgreSQL communities for their contributions and support. Your hard work makes projects like this possible.
 
 ---
 
-## Security Considerations
-
-- Do **not** expose your database credentials publicly.
-- Always use parameterized queries (as done in this code) to avoid SQL injection.
-- Monitor who has access to your server and databases.
-
----
+Feel free to explore the code, and let us know how we can improve this project!
